@@ -76,7 +76,7 @@ int main (void)
 	PinPort miso = {GPs[GPP2], 2, 0};
 	GPinPushPull(&miso);
 //	SPIini(0, 1, 16, 32, 1000000);
-	ChipAD5761 dac = {0, 1, 3, 0};
+	SPIDev dac = {0, 1, 3, 0};
 	
 	AD5761ini(&dac);
 	
@@ -122,7 +122,7 @@ int main (void)
 	int delta = 1000;
 	int max = 63000, min = 2000;
 	unsigned short regRdD[64];
-	int rxSize = 0, rdCnt = 0;
+	int rxSize = 0;
 //	unsigned short xyz[] = {0x5555, 0xAAAA};
 	while(1)
 	{
@@ -159,10 +159,10 @@ int main (void)
 			SendLn ("-------------------",  cnt, DEC);
 			for (int i = 0; i < 128; ++i)
 			{
-				ReadReg(&dac, RD_CTL_RG, regRdD);
-						Send("t", GetRxBuffIn(dac.spi), DEC);
-						Send(" b", GetRxBuffOut(dac.spi), DEC);
-						SendLn(" #", GetRxBuffLenght(dac.spi), DEC);
+				AD5761ReadReg(&dac, RD_CTL_RG, regRdD);
+				Send("t", GetRxBuffIn(dac.spi), DEC);
+				Send(" b", GetRxBuffOut(dac.spi), DEC);
+				SendLn(" #", GetRxBuffLenght(dac.spi), DEC);
 //						for (int i = 0; i < 4; ++i)
 //						{
 //							Send(" d[", i, DEC);

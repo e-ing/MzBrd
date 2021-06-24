@@ -412,6 +412,11 @@
               <FileType>1</FileType>
               <FilePath>.\code\BoardDev.c</FilePath>
             </File>
+            <File>
+              <FileName>AD8694.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\code\AD8694.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

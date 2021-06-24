@@ -15,21 +15,15 @@ typedef enum
 		RD_CTL_RG = 0xC
 	} AD5761Rgs;
 
-typedef struct
-{
-	unsigned char usicN;
-	unsigned char chan;
-	unsigned char sSelNum;
-	USIC_CH_TypeDef* spi;
-} ChipAD5761;
 
-void ReadReg (ChipAD5761* chip,  AD5761Rgs rgAdr, unsigned short* data);
 
-void AD5761ini(ChipAD5761* chip);
+void AD5761ReadReg (SPIDev* chip,  AD5761Rgs rgAdr, unsigned short* data);
 
-bool AD5761SetVal(ChipAD5761* chip, unsigned short val);
+void AD5761ini(SPIDev* chip);
 
-int AD5761GetVal(ChipAD5761* chip);
+bool AD5761SetVal(SPIDev* chip, unsigned short val);
+
+int AD5761GetVal(SPIDev* chip);
 
 
 

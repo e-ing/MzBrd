@@ -66,6 +66,15 @@ extern const unsigned long RX_DATA_READY;
 extern const unsigned long CS_CODE[];
 extern USIC_CH_TypeDef* usics[];
 
+
+typedef struct
+{
+	unsigned char usicN;
+	unsigned char chan;
+	unsigned char sSelNum;
+	USIC_CH_TypeDef* spi;
+} SPIDev;
+
 void SPIini(unsigned char usicN, unsigned char chan, unsigned long wLen, unsigned long frLen, int rate );
 void UARTini(unsigned char usicN, unsigned char chan, int rate);
 void ReleaseChan(unsigned char usicN, unsigned char chan);

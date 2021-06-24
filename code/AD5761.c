@@ -12,7 +12,6 @@ static bool WriteReg(USIC_CH_TypeDef* spi, unsigned char slN,  AD5761Rgs rgAdr, 
 	//configure DAC CS
   //configure CS polarity
 	//configure word and faramen lenght	
-	PoutPort* ledY =  GetYellowLED();
 	bool ret = false;
 	if(SPIdeviceConf(spi, FRAME_L, WORD_L, slN, CSPOL_LOW, MSB_FIRST))//TX Buffer ready check
 	{
@@ -52,9 +51,8 @@ static void FastPureWriteReg(USIC_CH_TypeDef* spi,  AD5761Rgs rgAdr, unsigned lo
 
 
 
-void ReadReg (ChipAD5761* chip,  AD5761Rgs rgAdr, unsigned short* data)
+void AD5761ReadReg (SPIDev* chip,  AD5761Rgs rgAdr, unsigned short* data)
 {
-	  static unsigned short cnt = 0;
 		while ( WriteReg(chip->spi, chip->sSelNum, rgAdr, 0) == false)
 		{//wait Tx Buffer Ready and send cmd;
 		}
@@ -75,7 +73,7 @@ void ReadReg (ChipAD5761* chip,  AD5761Rgs rgAdr, unsigned short* data)
 }
 
 
-void AD5761ini(ChipAD5761* chip)
+void AD5761ini(SPIDev* chip)
 {
 	chip->spi = usics[chip->usicN * USICS_NUM + chip->chan];
 	SPIini(chip->usicN, chip->chan, WORD_L, FRAME_L, 100000);
@@ -94,12 +92,12 @@ void AD5761ini(ChipAD5761* chip)
 }
 		
 
-int AD5761GetVal(ChipAD5761* chip)
+int AD5761GetVal(SPIDev* chip)
 {
 	return lastVal[chip->sSelNum];
 }
 
-bool AD5761SetVal(ChipAD5761* chip, unsigned short val)
+bool AD5761SetVal(SPIDev* chip, unsigned short val)
 {
 	bool ret =  WriteReg(chip->spi, chip->sSelNum, WR_AND_UPDATE_RG, val);
 	lastVal[chip->sSelNum] = ret? val : lastVal[chip->sSelNum];
