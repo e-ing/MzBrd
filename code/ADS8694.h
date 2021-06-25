@@ -69,7 +69,7 @@ typedef struct
 
 unsigned char AD8694ReadReg(ADS8694*  chip, RegsADS8694 rg);
 		
-void AD8694Ini(ADS8694* chip);
+void ADS8694Ini(ADS8694* chip);
 
 void AD8694CnvStart(ADS8694* chip);
 

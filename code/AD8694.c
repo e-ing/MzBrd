@@ -6,7 +6,7 @@ static const unsigned long FULL_INFO = 3; //Bits 0-8 contain: channel adress, de
 static const unsigned long WORD_L = 12;
 //static const unsigned long CMD_WORD_L = 16;
 static const unsigned long DATA_FRAME_L = 36;
-static const unsigned long REG_FRAME_L = 36;
+static const unsigned long REG_FRAME_L = 24;
 
 
 static void WriteCmd(USIC_CH_TypeDef* spi, Commandos cmd)
@@ -57,9 +57,9 @@ void ADS8694Ini(ADS8694* chip)
 	USIC_CH_TypeDef* spi = usics[chip->spiDv->usicN * USICS_NUM + chip->spiDv->chan];
 	chip->spiDv->spi = spi;
 	//SPIini(chip->usicN, chip->chan, WORD_L, FRAME_L, 100000);
-	SPIini(chip->spiDv->usicN, chip->spiDv->chan, WORD_L, REG_FRAME_L, 100000);
+	SPIini(chip->spiDv->usicN, chip->spiDv->chan, REG_FRAME_L, WORD_L,  100000);
 	OffSlaveSel(chip->spiDv->spi, chip->spiDv->sSelNum);
-	while( !SPIdeviceConf(spi, WORD_L, REG_FRAME_L, chip->spiDv->sSelNum, CSPOL_LOW, MSB_FIRST) );
+	while( !SPIdeviceConf(spi,  REG_FRAME_L, WORD_L, chip->spiDv->sSelNum, CSPOL_LOW, MSB_FIRST) );
 	WriteReg (spi, AUTO_SEQ_EN, 0xf);//+-10V operations, 5% overrange, 2 comliment code, to midscale after reset.
 	WriteReg (spi, FEATURE, ALARM_EN | FULL_INFO);
 	WriteReg (spi, CH0_RANGE, 0); 	// +-2.5*4.096V
@@ -77,7 +77,7 @@ void ADS8694Ini(ADS8694* chip)
 void ADS8694CnvStart(ADS8694* chip)
 {
 	USIC_CH_TypeDef* spi = chip->spiDv->spi;
-	while( !SPIdeviceConf(spi, WORD_L, DATA_FRAME_L, chip->spiDv->sSelNum, CSPOL_LOW, MSB_FIRST) );
+	while( !SPIdeviceConf(spi, DATA_FRAME_L, WORD_L,  chip->spiDv->sSelNum, CSPOL_LOW, MSB_FIRST) );
 	chip->stat = ADS_READY;
 	USICRxFIFOClean(spi);	
 	WriteCmd(spi, AUTO_CH);
@@ -108,7 +108,7 @@ bool ADS8694GetVal(ADS8694* chip, int* data)
 			tmpM = FIFORead(spi); //12 empty msb - e
 			tmpM = FIFORead(spi) & 0xff;
 			tmpM <<= 10;
-			tmpL = (FIFORead(spi) >> 2) & 0x3f;
+			tmpL = (FIFORead(spi) >> 2) & 0x3ff;
 			data[adCh] = tmpL | tmpM;
 		}		
 		chip->stat = ADS_IDDLE;

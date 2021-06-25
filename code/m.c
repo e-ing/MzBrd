@@ -14,6 +14,7 @@
 #include  <USIC.h>
 #include <GPIOs.h>
 #include <AD5761.h>
+#include <ADS8694.h>
 #include <BoardDev.h>
 
 void Enter()
@@ -64,21 +65,35 @@ int main (void)
 	PoutPort*  hbPin =  GetYellowLED();// =  {GPs[GPP2], 0, 0, 0, 0};
 	
 	PoutPort*  hbBlue =  GetBlueLED();
+	
+	for(int i = 0; i < 6; ++i)
+	{
+		Tx1(1, 1, '.');
+		GPToggle( hbPin );
+		Delay(250 - i * i * i);
+	}
+	
+	for(int i = 0; i < 6; ++i)
+	{
+		Tx1(1, 1, '.');
+		GPToggle( hbBlue );
+		Delay(250 - i * i * i);
+	}
 	PinPort rx1 = {GPs[GPP0], 0, 0};
 	GPinPushPull(&rx1);
 	UARTini(1, 1, 115200);
 	PoutPort  tx1 =  {GPs[GPP0], 1, 0, 0, 0};
 	IniGPO( &tx1);
 	SetAltFn(&tx1, 2);
-	
-	USIC_CH_TypeDef* uart1 = usics[3];
+	SendStr("UART on \n");
+//	USIC_CH_TypeDef* uart1 = usics[3];
 	
 	PinPort miso = {GPs[GPP2], 2, 0};
 	GPinPushPull(&miso);
 //	SPIini(0, 1, 16, 32, 1000000);
 	SPIDev dac = {0, 1, 3, 0};
-	
-	AD5761ini(&dac);
+	SPIDev adc = {0, 1, 0, 0};
+	ADS8694 ads = { &adc, {0}, ADS_IDDLE };
 	
 	PoutPort mosi = {GPs[GPP2], 5, 0, 0, 0};
 	IniGPO(&mosi);
@@ -92,15 +107,21 @@ int main (void)
 	IniGPO(&csDac);
 	SetAltFn(&csDac, 2);//selo3
 	
-	AD5761ini(&dac);
+	PoutPort lDac = {GPs[GPP1], 14, 0, 0, 0};
+	IniGPO(&lDac);//csADC
+	GPtoL(&lDac);
 	
 	PoutPort csAdc = {GPs[GPP2], 3, 0, 0, 0};
 	IniGPO(&csAdc);//csADC
 	SetAltFn(&csAdc, 2);//selo0
 	
-	PoutPort lDac = {GPs[GPP1], 14, 0, 0, 0};
-	IniGPO(&lDac);//csADC
-	GPtoL(&lDac);
+	AD5761ini(&dac);
+	SendStr("DAC AD5761 on \n");
+	ADS8694Ini(&ads);
+	SendStr("ADC ADS8494 on \n");
+
+	
+
 	
 //	USIC_CH_TypeDef* spi1 = usics[1];
 	
@@ -116,16 +137,81 @@ int main (void)
 	unsigned char nByte = 0;
 	char rxData[64];
 	Enter();
-	SendStr("Hello J-TAG!");
+	SendStr("Hello! Mz0.0\n");
 	int daVal = 0;
 	bool isRise = true;
 	int delta = 1000;
 	int max = 63000, min = 2000;
 	unsigned short regRdD[64];
+	int adRd[4];
 	int rxSize = 0;
 //	unsigned short xyz[] = {0x5555, 0xAAAA};
 	while(1)
 	{
+
+		if((++cnt % 100) == 0)
+			GPToggle(hbPin);
+		if((cnt % 147) == 0)
+		{
+			GPToggle(hbBlue);
+			if (ADS8694ReadStart(&ads, adRd) != false)
+			{ 
+				SendLn("ok #", cnt / 147, DEC);
+				for (int chn = 0; chn < 4; ++chn)
+				{
+					Send("ad[", chn, DEC );
+					SendLn("]", adRd[chn], HEX);
+				}
+			}
+		}	
+		Delay(5);
+	//	SendLn("------------------", ++cnt, DEC);
+
+//		SPIdeviceConf ( spi1, 32, 16, 3, (const  CSpol) 4, (const BitOrder) 1);                                                                                                                                                                                         , CSPOL_LOW, MSB_FIRST))//TX Buffer ready check
+		//SPIdeviceConf(spi, FRAME_L, WORD_L, slN, CSPOL_LOW, MSB_FIRST))//TX Buffer ready check
+		//unsigned short data[2] = {(unsigned short)(0x >> 12) | rgAdr << 4,
+		//													(unsigned short)(val & 0xFFF)};		
+//		USICRxFIFOClean(spi1);
+	
+	//	else if((++cnt % 5) == 0)
+					
+		//FastUSICTxw(spi1, xyz, 2);	
+//		AD5761SetVal(&dac, daVal);
+		daVal += isRise? delta : -delta;
+		isRise = (daVal > max)? false : (daVal < min)? true : isRise;
+	}
+}
+
+//ReadDAC
+//						{
+//							GPToggle(hbBlue);
+//							SendLn ("-------------------",  cnt, DEC);
+//							Send("t", GetRxBuffIn(dac.spi), DEC);
+//							Send(" b", GetRxBuffOut(dac.spi), DEC);
+//							SendLn(" #", GetRxBuffLenght(dac.spi), DEC);
+//							SendLn ("-------------------",  cnt, DEC);
+//							for (int i = 0; i < 128; ++i)
+//							{
+//								AD5761ReadReg(&dac, RD_CTL_RG, regRdD);
+//								Send("t", GetRxBuffIn(dac.spi), DEC);
+//								Send(" b", GetRxBuffOut(dac.spi), DEC);
+//								SendLn(" #", GetRxBuffLenght(dac.spi), DEC);
+//				//						for (int i = 0; i < 4; ++i)
+//				//						{
+//				//							Send(" d[", i, DEC);
+//				//							SendLn("]", FIFORead(dac.spi), HEX);
+//				//						}
+//				//						SendLn("+++++++++++++++++++", cnt, DEC);
+//								Send("m", regRdD[0], HEX);
+//								Send(".", regRdD[1], HEX);
+//				//				Send(".", regRdD[2], HEX);
+//				//				SendLn("-", regRdD[3], HEX);	
+//								Sleep(500);
+//							}
+//						}
+
+
+//Read UART
 //					nByte = USICRxb(uart1, rxData);
 //					if(nByte > 0)
 //					{
@@ -145,55 +231,6 @@ int main (void)
 //						}
 //						SendLn("------------------", ++cnt, DEC);
 //					}
-		if((++cnt % 100) == 0)
-		{
-			GPToggle(hbPin);
-		}
-		if((cnt % 147) == 0)
-		{
-			GPToggle(hbBlue);
-			SendLn ("-------------------",  cnt, DEC);
-			Send("t", GetRxBuffIn(dac.spi), DEC);
-			Send(" b", GetRxBuffOut(dac.spi), DEC);
-			SendLn(" #", GetRxBuffLenght(dac.spi), DEC);
-			SendLn ("-------------------",  cnt, DEC);
-			for (int i = 0; i < 128; ++i)
-			{
-				AD5761ReadReg(&dac, RD_CTL_RG, regRdD);
-				Send("t", GetRxBuffIn(dac.spi), DEC);
-				Send(" b", GetRxBuffOut(dac.spi), DEC);
-				SendLn(" #", GetRxBuffLenght(dac.spi), DEC);
-//						for (int i = 0; i < 4; ++i)
-//						{
-//							Send(" d[", i, DEC);
-//							SendLn("]", FIFORead(dac.spi), HEX);
-//						}
-//						SendLn("+++++++++++++++++++", cnt, DEC);
-				Send("m", regRdD[0], HEX);
-				Send(".", regRdD[1], HEX);
-//				Send(".", regRdD[2], HEX);
-//				SendLn("-", regRdD[3], HEX);	
-				Sleep(500);
-			}
-		}
-		Delay(5);
-	//	SendLn("------------------", ++cnt, DEC);
-
-//		SPIdeviceConf ( spi1, 32, 16, 3, (const  CSpol) 4, (const BitOrder) 1);                                                                                                                                                                                         , CSPOL_LOW, MSB_FIRST))//TX Buffer ready check
-		//SPIdeviceConf(spi, FRAME_L, WORD_L, slN, CSPOL_LOW, MSB_FIRST))//TX Buffer ready check
-		//unsigned short data[2] = {(unsigned short)(0x >> 12) | rgAdr << 4,
-		//													(unsigned short)(val & 0xFFF)};		
-//		USICRxFIFOClean(spi1);
-	
-	//	else if((++cnt % 5) == 0)
-					
-		//FastUSICTxw(spi1, xyz, 2);	
-//		AD5761SetVal(&dac, daVal);
-		daVal += isRise? delta : -delta;
-		isRise = (daVal > max)? false : (daVal < min)? true : isRise;
-	}
-}
-
 
 
 /////////////////////////====================//////////////////
