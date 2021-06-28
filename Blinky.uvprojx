@@ -417,6 +417,11 @@
               <FileType>1</FileType>
               <FilePath>.\code\AD8694.c</FilePath>
             </File>
+            <File>
+              <FileName>Str.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\code\Str.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -16,45 +16,7 @@
 #include <AD5761.h>
 #include <ADS8694.h>
 #include <BoardDev.h>
-
-void Enter()
-{
-	Tx1(1, 1, 13);
-	Tx1(1, 1, 10);
-}
-
-
-void SendStr(const char* str)
-{
-	if(str != 0)
-		do
-		{
-			Tx1(1, 1, *str);
-			Delay(10);
-		}
-		while(*++str);	
-}
-
-
-enum PrintMode 
-{
-	 HEX = 'h',
-   DEC = 'd'	
-} ;
-
-void Send(const char* str, unsigned long data, enum PrintMode mode)
-{
-	char strEx[32];
-	SendStr(str);
-	sprintf (strEx, (mode == HEX)? "%x" : "%d", (unsigned int) data);
-	SendStr (strEx);
-}
-
-void SendLn(const char* str, unsigned long data, enum PrintMode mode)
-{
-	Send(str, data, mode);
-	Enter();
-}
+#include <Str.h>
 
 
 int main (void) 
@@ -68,14 +30,14 @@ int main (void)
 	
 	for(int i = 0; i < 6; ++i)
 	{
-		Tx1(1, 1, '.');
+	//	Tx1(1, 1, '.');
 		GPToggle( hbPin );
 		Delay(250 - i * i * i);
 	}
 	
 	for(int i = 0; i < 6; ++i)
 	{
-		Tx1(1, 1, '.');
+	//	Tx1(1, 1, '.');
 		GPToggle( hbBlue );
 		Delay(250 - i * i * i);
 	}
@@ -146,6 +108,7 @@ int main (void)
 	int adRd[4];
 	int rxSize = 0;
 //	unsigned short xyz[] = {0x5555, 0xAAAA};
+	int tmpM, tmpL, nWrd;
 	while(1)
 	{
 
@@ -157,11 +120,32 @@ int main (void)
 			if (ADS8694ReadStart(&ads, adRd) != false)
 			{ 
 				SendLn("ok #", cnt / 147, DEC);
-				for (int chn = 0; chn < 4; ++chn)
+								
+				for (int chn = 0; chn < 16; ++chn)
 				{
 					Send("ad[", chn, DEC );
-					SendLn("]", adRd[chn], HEX);
+					SendLn("]", adRd[chn], HEX);					
 				}
+				
+				for (int nFrm  = 0; nFrm  < 5; ++nFrm )
+				{
+						tmpM = adRd[nFrm * 3 + 1] & 0xff;
+						tmpM <<= 10;
+						tmpL  = (adRd[nFrm * 3 + 2] >> 2) & 0x3ff;
+						Send("fr", nFrm, DEC);
+						Send("  ", tmpM, HEX);
+						Send(" | ",  tmpL, HEX);
+						SendLn(" = ", tmpM | tmpL, HEX);
+				}
+				
+//			tmpM = FIFORead(spi); //12 empty msb - e
+//			tmpM = FIFORead(spi) & 0xff;
+//			tmpM <<= 10;
+//			tmpL = (FIFORead(spi) >> 2) & 0x3ff;
+//			data[adCh] = tmpL | tmpM;
+				
+				
+				
 			}
 		}	
 		Delay(5);

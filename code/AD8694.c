@@ -1,5 +1,7 @@
 #include <ADS8694.h>
 #include <TheTime.h>
+#include <Str.h>
+#include <BoardDev.h>
 
 static const unsigned long ALARM_EN = B4;
 static const unsigned long FULL_INFO = 3; //Bits 0-8 contain: channel adress, device address and inpet renge. SBAS686 p.54 table12
@@ -23,7 +25,7 @@ static void WriteReg(USIC_CH_TypeDef* spi, RegsADS8694 rg, unsigned short val)
 	d0 <<= 5;
 	d0 |=  (1 << 4) | (val >> 4);
 	val &= 0xf;
-	val <<= 4;
+	val <<= 8;
 	unsigned short data[2] = {d0, val};
 	FastUSICTxw(spi, data, 2);	
 }
@@ -57,21 +59,49 @@ void ADS8694Ini(ADS8694* chip)
 	USIC_CH_TypeDef* spi = usics[chip->spiDv->usicN * USICS_NUM + chip->spiDv->chan];
 	chip->spiDv->spi = spi;
 	//SPIini(chip->usicN, chip->chan, WORD_L, FRAME_L, 100000);
-	SPIini(chip->spiDv->usicN, chip->spiDv->chan, REG_FRAME_L, WORD_L,  100000);
+	SPIini(chip->spiDv->usicN, chip->spiDv->chan,  WORD_L, REG_FRAME_L, 100000);
 	OffSlaveSel(chip->spiDv->spi, chip->spiDv->sSelNum);
-	while( !SPIdeviceConf(spi,  REG_FRAME_L, WORD_L, chip->spiDv->sSelNum, CSPOL_LOW, MSB_FIRST) );
-	WriteReg (spi, AUTO_SEQ_EN, 0xf);//+-10V operations, 5% overrange, 2 comliment code, to midscale after reset.
+	while( !SPIdeviceConf(spi,  REG_FRAME_L, WORD_L, chip->spiDv->sSelNum, CSPOL_LOW, MSB_FIRST) )
+	{
+	}
+	USICRxFIFOClean(spi);
+	PoutPort* blue = GetBlueLED();
+//	while (true)
+//	{
+		Sleep(1);
+		WriteReg (spi, AUTO_SEQ_EN, 0xf);//+-10V operations, 5% overrange, 2 comliment code, to midscale after reset.
+		Sleep(1);
+		SendLn("A_S_EN0:" , FIFORead(spi), HEX);
+		SendLn("A_S_EN1:" , FIFORead(spi), HEX);
+		GPToggle(blue);
+	//}
 	WriteReg (spi, FEATURE, ALARM_EN | FULL_INFO);
-	WriteReg (spi, CH0_RANGE, 0); 	// +-2.5*4.096V
+	Sleep(1);
+	SendLn("Feature0:" , FIFORead(spi), HEX);
+	SendLn("Feature1:" , FIFORead(spi), HEX);
+	WriteReg (spi, CH0_RANGE, 0); 	// +-2.5*4.096V	
+	Sleep(1);
+	SendLn("CH0Rg0-0:" , FIFORead(spi), HEX);
+	SendLn("CH0Rg0-1:" , FIFORead(spi), HEX);
 	WriteReg (spi, CH1_RANGE, 0);		// +-2.5*4.096V
+	Sleep(1);
+	SendLn("CH0Rg1-0:" , FIFORead(spi), HEX);
+	SendLn("CH0Rg1-1:" , FIFORead(spi), HEX);
 	WriteReg (spi, CH2_RANGE, 0);		// +-2.5*4.096V
+	Sleep(1);
+	SendLn("CH0Rg2-0:" , FIFORead(spi), HEX);
+	SendLn("CH0Rg2-1:" , FIFORead(spi), HEX);
 	WriteReg (spi, CH3_RANGE, 0);		// +-2.5*4.096V
+	Sleep(1);
+	SendLn("CH0Rg0-0:" , FIFORead(spi), HEX);
+	SendLn("CH0Rg0-1:" , FIFORead(spi), HEX);
 	while( !IsTxBuffEmpty(spi) )
 	{//wait the ent of Tx Empty frame 
 	}	
-	Sleep(0.01);
+	Sleep(1);
 	USICRxFIFOClean(spi);
 	chip->stat = ADS_IDDLE;
+	SendStr("ini done");
 }
 
 void ADS8694CnvStart(ADS8694* chip)
@@ -82,7 +112,10 @@ void ADS8694CnvStart(ADS8694* chip)
 	USICRxFIFOClean(spi);	
 	WriteCmd(spi, AUTO_CH);
 	for( int i = 0; i < 4; ++i)
+	{
+		Sleep(0.1);
 		WriteCmd(spi, NOP);
+	}
 	chip->stat = ADS_WORK;	
 }
 
@@ -92,24 +125,26 @@ bool ADS8694GetVal(ADS8694* chip, int* data)
 	if(chip->stat == ADS_WORK)
 	{
 		USIC_CH_TypeDef* spi = chip->spiDv->spi;
-		while( !IsTxBuffEmpty(spi) )
+		while( !IsTxBuffEmpty (spi) )
 		{//wait the ent of Tx Empty frame 
 		}	
 		ret = true;
 		int tmpM,  tmpL;
-		Sleep(0.01);
+		Sleep(1);
 		chip->stat = ADS_READY;
-		tmpL = FIFORead(spi);
-		tmpL = FIFORead(spi);
-		tmpL = FIFORead(spi);//cmd frame
+//		tmpL = FIFORead(spi);
+//		tmpL = FIFORead(spi);
+//		tmpL = FIFORead(spi);//cmd frame
 		
-		for (char adCh = 0; adCh < 4; ++adCh)
+		for (char adCh = 0; adCh < 16; ++adCh)
 		{
-			tmpM = FIFORead(spi); //12 empty msb - e
-			tmpM = FIFORead(spi) & 0xff;
-			tmpM <<= 10;
-			tmpL = (FIFORead(spi) >> 2) & 0x3ff;
-			data[adCh] = tmpL | tmpM;
+//			tmpM = FIFORead(spi); //12 empty msb - e
+//			tmpM = FIFORead(spi) & 0xff;
+//			tmpM <<= 10;
+//			tmpL = (FIFORead(spi) >> 2) & 0x3ff;
+//			data[adCh] = tmpL | tmpM;
+				data[adCh] = FIFORead(spi);
+				Sleep(1);
 		}		
 		chip->stat = ADS_IDDLE;
 	}

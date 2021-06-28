@@ -1,5 +1,6 @@
 #include <BoardDev.h>
 #include <Bits.h>
+#include  <USIC.h>
 
 PoutPort* GetYellowLED(void)
 {
@@ -28,3 +29,5 @@ PoutPort* GetBlueLED(void)
 	}
 	return &ret;
 }
+
+
