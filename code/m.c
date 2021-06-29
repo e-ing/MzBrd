@@ -43,12 +43,32 @@ int main (void)
 	}
 	PinPort rx1 = {GPs[GPP0], 0, 0};
 	GPinPushPull(&rx1);
-	UARTini(1, 1, 115200);
+	UARTini(1, 1, 115200, DXD);
 	PoutPort  tx1 =  {GPs[GPP0], 1, 0, 0, 0};
 	IniGPO( &tx1);
 	SetAltFn(&tx1, 2);
-	SendStr("UART on \n");
-//	USIC_CH_TypeDef* uart1 = usics[3];
+	SendStr("UART1 on \n");
+	USIC_CH_TypeDef* uart1 = usics[3];
+	USIC_CH_TypeDef* uart2 = usics[2];
+	
+	PinPort rx2 = {GPs[GPP0], 4, 0};
+	GPinPushPull(&rx2);
+	UARTini(1, 0, 115200, DXA);
+	PoutPort  tx2 =  {GPs[GPP0], 5, 0, 0, 0};
+	IniGPO( &tx2);
+	SetAltFn(&tx2, 2);
+	SendStr("UART2 on \n");
+	SendStr2("==UART2 on \n");
+
+		SendStr("UART2 on \n");
+		SendStr2("UART2==n \n");
+		Delay(200);
+		SendStr2("...");
+		Delay(200);
+
+		GPToggle(hbBlue);
+
+	
 	
 	PinPort miso = {GPs[GPP2], 2, 0};
 	GPinPushPull(&miso);
@@ -79,8 +99,10 @@ int main (void)
 	
 	AD5761ini(&dac);
 	SendStr("DAC AD5761 on \n");
+	SendStr2("==DAC AD5761 on \n");
 	ADS8694Ini(&ads);
 	SendStr("ADC ADS8494 on \n");
+	SendStr2("ADC ADS8494 on \n");
 
 	
 
@@ -111,9 +133,38 @@ int main (void)
 	int tmpM, tmpL, nWrd;
 	while(1)
 	{
+		
+		//Read UART
+		
+		
 
-		if((++cnt % 100) == 0)
+		if((++cnt % 25) == 0)
+		{
 			GPToggle(hbPin);
+					nByte = USICRxb(uart2, rxData);
+					if(nByte > 0)
+					{
+						//GPToggle(GPs[GPP2], 0);
+						Enter();
+			//			SendLn("TRBPTR", uart1->TRBPTR , HEX);
+			//			SendLn("TRBSR= ", uart1->TRBSR , HEX);
+						SendLn2("RxLn ", nByte, DEC);
+						Delay(100);
+						rxData[nByte] = 0;
+						SendStr2(rxData);
+//						for(int i = 0; i <= nByte; ++i)
+//						{
+//						//	Send2("str[", i, DEC);
+//							SendLn2("-", rxData[i], HEX);
+//						}
+//						for(int i = 0; i <= nByte; ++i)
+//						{
+//							Tx1(1, 0, rxData[i]);
+//						}
+//						SendLn2("---", ++cnt, DEC);
+					}
+
+		}
 		if((cnt % 147) == 0)
 		{
 			GPToggle(hbBlue);

@@ -51,7 +51,7 @@ const unsigned long RX_DATA_READY = 1 << 14 | 1 << 13;
 
 const unsigned long CS_CODE[] = {1 << 16, B17, B18, B19, B20, B21, B22, B23};
 USIC_CH_TypeDef* usics[] = {USIC0_CH0, USIC0_CH1, USIC1_CH0, USIC1_CH1}; 
-static bool isUsicIni[4] = {false}; 
+static bool isUsicIni[4] = {false, false, false, false}; 
 
 void DisableAllSlavesSel(USIC_CH_TypeDef* s)
 {
@@ -192,7 +192,7 @@ void ReleaseChan(unsigned char usicN, unsigned char chan)
 	isUsicIni[num] = false;
 }
 
-void UARTini(unsigned char usicN, unsigned char chan, int rate)
+void UARTini(unsigned char usicN, unsigned char chan, int rate, DX0_DSEL dx0N)
 {	
 	unsigned char num = usicN * USICS_NUM + chan;
 	if (isUsicIni[num] != false)
@@ -256,7 +256,7 @@ void UARTini(unsigned char usicN, unsigned char chan, int rate)
 
 //XMC_USIC_CH_SetInputSource(XMC_UART1_CH0, XMC_USIC_CH_INPUT_DX0, 2U);
 	uart->DX0CR &= ~7;//  (uint32_t)((channel->DXCR[input] & (uint32_t)(~USIC_CH_DXCR_DSEL_Msk)) |
-  uart->DX0CR |= 3;//DX0_D                      ((uint32_t)source << USIC_CH_DXCR_DSEL_Pos));
+  uart->DX0CR |= dx0N;//
 	unsigned short tmp;
 	for(int i = 0; i < 20; ++i)
 		tmp = uart->OUTR;
@@ -396,22 +396,7 @@ unsigned int USICRxw(USIC_CH_TypeDef* usic, unsigned short* data)
 	
 }
 
-void USICRxFIFOClean(USIC_CH_TypeDef* usic)
-{
-	unsigned short tmp;
-	while (!IsRxFIFOEmpty(usic))
-		tmp = usic->OUTR;	
-}
-unsigned int USICRxb(USIC_CH_TypeDef* usic, char* data)
-{
-	unsigned int num = 0, ret = GetRxBuffLenght(usic);
 
-	while (num <= ret )/////!IsRxFIFOEmpty(usic)
-			data[num++] = (char) (usic->OUTR & 0xff);
-	//data[num++] = (char) (usic->RBUF & 0xff);	
-
-	return ret;
-}
 
 void FastUSICTxw(USIC_CH_TypeDef* usic, const unsigned short* data, unsigned int len)
 {
@@ -437,11 +422,6 @@ bool SPIdeviceConf(USIC_CH_TypeDef* usic, unsigned long frLen, unsigned long wLe
 }
 
 
-unsigned char GetRxBuffSz(USIC_CH_TypeDef* usic)
-{
-	unsigned long ret =  (usic->RBCTR & USIC_CH_RBCTR_SIZE_Msk) >> 24;
-	return (ret == 0)? 0 : (unsigned char) (1 << ret);
-}	
 
 
 
@@ -450,6 +430,37 @@ unsigned short FIFORead(USIC_CH_TypeDef* usic)
 		return usic->OUTR;
 }
 
+void USICRxFIFOClean(USIC_CH_TypeDef* usic)
+{
+	unsigned short tmp;
+	while (!IsRxFIFOEmpty(usic))
+		tmp = usic->OUTR;	
+}
+
+unsigned int USICRxb(USIC_CH_TypeDef* usic, char* data)
+{
+	unsigned int num = 0; //ret = GetRxBuffLenght(usic);
+
+	while (!IsRxFIFOEmpty(usic) )/////!IsRxFIFOEmpty(usic)
+	{
+			data[num++] = (char) (usic->OUTR & 0xff);
+		data[num] = 'x';
+	}
+	
+	//data[num++] = (char) (usic->RBUF & 0xff);	
+	return num;
+}
+
+
+
+
+
+
+unsigned char GetRxBuffSz(USIC_CH_TypeDef* usic)
+{
+	unsigned long ret =  (usic->RBCTR & USIC_CH_RBCTR_SIZE_Msk) >> 24;
+	return (ret == 0)? 0 : (unsigned char) (1 << ret);
+}	
 
 //	spi->KSCFG = 3; // Module enable & bit protection
 ////==Clock==

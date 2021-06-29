@@ -17,6 +17,19 @@ typedef enum
 	MSB_FIRST = 1
 }  BitOrder;
 
+
+typedef enum
+{
+	DXA,
+	DXB,
+	DXC,
+	DXD,
+	DXE,
+	DXF,
+	DXG,
+	ONE_FOREWER
+} DX0_DSEL;
+
 //BRG
 extern const unsigned long PASSIV_CLK_HIGH;
 //SCTR
@@ -76,7 +89,7 @@ typedef struct
 } SPIDev;
 
 void SPIini(unsigned char usicN, unsigned char chan, unsigned long wLen, unsigned long frLen, int rate );
-void UARTini(unsigned char usicN, unsigned char chan, int rate);
+void UARTini(unsigned char usicN, unsigned char chan, int rate, DX0_DSEL dx0N);
 void ReleaseChan(unsigned char usicN, unsigned char chan);
 void DisableAllSlavesSel(USIC_CH_TypeDef* s);
 void SlaveSelMask(USIC_CH_TypeDef* s, unsigned char mask);//mask 0 - 0xff b0 - slave0, b1 - slave1.. 1 - active, 0 - off.

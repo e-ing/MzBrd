@@ -23,8 +23,8 @@ PoutPort* GetBlueLED(void)
 	if(isIni == false)
 	{
 		isIni = true;
-		ret.port = GPs[GPP0];
-		ret.pin = 4;
+		ret.port = GPs[GPP2];//GPs[GPP0];
+		ret.pin = 7;
 		IniGPO(&ret);
 	}
 	return &ret;
