@@ -435,6 +435,8 @@ void USICRxFIFOClean(USIC_CH_TypeDef* usic)
 	unsigned short tmp;
 	while (!IsRxFIFOEmpty(usic))
 		tmp = usic->OUTR;	
+	tmp = usic->OUTR;	
+	tmp = usic->OUTR;	
 }
 
 unsigned int USICRxb(USIC_CH_TypeDef* usic, char* data)

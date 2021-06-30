@@ -127,79 +127,34 @@ int main (void)
 	int delta = 1000;
 	int max = 63000, min = 2000;
 	unsigned short regRdD[64];
-	int adRd[4];
+	int adRd[16];
 	int rxSize = 0;
 //	unsigned short xyz[] = {0x5555, 0xAAAA};
-	int tmpM, tmpL, nWrd;
+	int tmpM, tmp2, tmpL, nWrd, adD, adCh, adAny, orjL,  orjMost;
+	ADS8694ReadStart(&ads, adRd);
 	while(1)
 	{
-		
 		//Read UART
-		
-		
-
 		if((++cnt % 25) == 0)
 		{
 			GPToggle(hbPin);
-					nByte = USICRxb(uart2, rxData);
-					if(nByte > 0)
-					{
-						//GPToggle(GPs[GPP2], 0);
-						Enter();
-			//			SendLn("TRBPTR", uart1->TRBPTR , HEX);
-			//			SendLn("TRBSR= ", uart1->TRBSR , HEX);
-						SendLn2("RxLn ", nByte, DEC);
-						Delay(100);
-						rxData[nByte] = 0;
-						SendStr2(rxData);
-//						for(int i = 0; i <= nByte; ++i)
-//						{
-//						//	Send2("str[", i, DEC);
-//							SendLn2("-", rxData[i], HEX);
-//						}
-//						for(int i = 0; i <= nByte; ++i)
-//						{
-//							Tx1(1, 0, rxData[i]);
-//						}
-//						SendLn2("---", ++cnt, DEC);
-					}
-
 		}
 		if((cnt % 147) == 0)
 		{
 			GPToggle(hbBlue);
-			if (ADS8694ReadStart(&ads, adRd) != false)
+			if (ADS8694Ch0ReadStart(&ads, adRd) != false)
 			{ 
 				SendLn("ok #", cnt / 147, DEC);
-								
-				for (int chn = 0; chn < 16; ++chn)
-				{
-					Send("ad[", chn, DEC );
-					SendLn("]", adRd[chn], HEX);					
-				}
-				
-				for (int nFrm  = 0; nFrm  < 5; ++nFrm )
-				{
-						tmpM = adRd[nFrm * 3 + 1] & 0xff;
-						tmpM <<= 10;
-						tmpL  = (adRd[nFrm * 3 + 2] >> 2) & 0x3ff;
-						Send("fr", nFrm, DEC);
-						Send("  ", tmpM, HEX);
-						Send(" | ",  tmpL, HEX);
-						SendLn(" = ", tmpM | tmpL, HEX);
-				}
-				
-//			tmpM = FIFORead(spi); //12 empty msb - e
-//			tmpM = FIFORead(spi) & 0xff;
-//			tmpM <<= 10;
-//			tmpL = (FIFORead(spi) >> 2) & 0x3ff;
-//			data[adCh] = tmpL | tmpM;
-				
-				
-				
+				Send("", adRd[0], HEX);				
+				adD = ((adRd[2] >> 2) & 0x3f) | ((adRd[1] & 0xff) << 10);
+//				Send("-", adRd[1], HEX);
+//				Send("-", adRd[2], HEX);
+				SendLn("-", adD, HEX);
+				Sleep(2000);
 			}
-		}	
-		Delay(5);
+		}
+	}	
+	Delay(5);
 	//	SendLn("------------------", ++cnt, DEC);
 
 //		SPIdeviceConf ( spi1, 32, 16, 3, (const  CSpol) 4, (const BitOrder) 1);                                                                                                                                                                                         , CSPOL_LOW, MSB_FIRST))//TX Buffer ready check
@@ -214,7 +169,6 @@ int main (void)
 //		AD5761SetVal(&dac, daVal);
 		daVal += isRise? delta : -delta;
 		isRise = (daVal > max)? false : (daVal < min)? true : isRise;
-	}
 }
 
 //ReadDAC
@@ -265,6 +219,32 @@ int main (void)
 //							Tx1(1, 1, rxData[i]);
 //						}
 //						SendLn("------------------", ++cnt, DEC);
+//					}
+
+
+
+
+//					nByte = USICRxb(uart2, rxData);
+//					if(nByte > 0)
+//					{
+//						//GPToggle(GPs[GPP2], 0);
+//						Enter();
+//			//			SendLn("TRBPTR", uart1->TRBPTR , HEX);
+//			//			SendLn("TRBSR= ", uart1->TRBSR , HEX);
+//						SendLn2("RxLn ", nByte, DEC);
+//						Delay(100);
+//						rxData[nByte] = 0;
+//						SendStr2(rxData);
+////						for(int i = 0; i <= nByte; ++i)
+////						{
+////						//	Send2("str[", i, DEC);
+////							SendLn2("-", rxData[i], HEX);
+////						}
+////						for(int i = 0; i <= nByte; ++i)
+////						{
+////							Tx1(1, 0, rxData[i]);
+////						}
+////						SendLn2("---", ++cnt, DEC);
 //					}
 
 

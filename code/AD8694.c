@@ -6,6 +6,7 @@
 static const unsigned long ALARM_EN = B4;
 static const unsigned long FULL_INFO = 3; //Bits 0-8 contain: channel adress, device address and inpet renge. SBAS686 p.54 table12
 static const unsigned long WORD_L = 12;
+static const unsigned long DT_WORD_L = 12;
 //static const unsigned long CMD_WORD_L = 16;
 static const unsigned long DATA_FRAME_L = 36;
 static const unsigned long REG_FRAME_L = 24;
@@ -13,7 +14,7 @@ static const unsigned long REG_FRAME_L = 24;
 
 static void WriteCmd(USIC_CH_TypeDef* spi, Commandos cmd)
 {
-	unsigned short data[3] = {cmd, 0, 0};
+	unsigned short data[] = {cmd, 0, 0 };
 	FastUSICTxw(spi, data, 3);
 }
 
@@ -69,53 +70,72 @@ void ADS8694Ini(ADS8694* chip)
 //	while (true)
 //	{
 		Sleep(1);
-		WriteReg (spi, AUTO_SEQ_EN, 0xf);//+-10V operations, 5% overrange, 2 comliment code, to midscale after reset.
+		WriteReg (spi, AUTO_SEQ_EN, 0xf);
 		Sleep(1);
 		SendLn("A_S_EN0:" , FIFORead(spi), HEX);
 		SendLn("A_S_EN1:" , FIFORead(spi), HEX);
+
 		GPToggle(blue);
 	//}
 	WriteReg (spi, FEATURE, ALARM_EN | FULL_INFO);
 	Sleep(1);
 	SendLn("Feature0:" , FIFORead(spi), HEX);
 	SendLn("Feature1:" , FIFORead(spi), HEX);
-	WriteReg (spi, CH0_RANGE, 0); 	// +-2.5*4.096V	
+	
 	Sleep(1);
-	SendLn("CH0Rg0-0:" , FIFORead(spi), HEX);
-	SendLn("CH0Rg0-1:" , FIFORead(spi), HEX);
-	WriteReg (spi, CH1_RANGE, 0);		// +-2.5*4.096V
+	WriteReg (spi, PDW, 0xF0);
 	Sleep(1);
-	SendLn("CH0Rg1-0:" , FIFORead(spi), HEX);
-	SendLn("CH0Rg1-1:" , FIFORead(spi), HEX);
-	WriteReg (spi, CH2_RANGE, 0);		// +-2.5*4.096V
-	Sleep(1);
-	SendLn("CH0Rg2-0:" , FIFORead(spi), HEX);
-	SendLn("CH0Rg2-1:" , FIFORead(spi), HEX);
-	WriteReg (spi, CH3_RANGE, 0);		// +-2.5*4.096V
-	Sleep(1);
-	SendLn("CH0Rg0-0:" , FIFORead(spi), HEX);
-	SendLn("CH0Rg0-1:" , FIFORead(spi), HEX);
-	while( !IsTxBuffEmpty(spi) )
-	{//wait the ent of Tx Empty frame 
-	}	
+	SendLn("PDW0:" ,  FIFORead(spi), HEX);
+	SendLn("FPDW1:" , FIFORead(spi), HEX);
+
+////	WriteReg (spi, CH0_RANGE, 0); 	// +-2.5*4.096V	
+////	Sleep(1);
+////	SendLn("CH0Rg0-0:" , FIFORead(spi), HEX);
+////	SendLn("CH0Rg0-1:" , FIFORead(spi), HEX);
+////	WriteReg (spi, CH1_RANGE, 0);		// +-2.5*4.096V
+////	Sleep(1);
+////	SendLn("CH0Rg1-0:" , FIFORead(spi), HEX);
+////	SendLn("CH0Rg1-1:" , FIFORead(spi), HEX);
+////	WriteReg (spi, CH2_RANGE, 0);		// +-2.5*4.096V
+////	Sleep(1);
+////	SendLn("CH0Rg2-0:" , FIFORead(spi), HEX);
+////	SendLn("CH0Rg2-1:" , FIFORead(spi), HEX);
+////	WriteReg (spi, CH3_RANGE, 0);		// +-2.5*4.096V
+////	Sleep(1);
+////	SendLn("CH0Rg0-0:" , FIFORead(spi), HEX);
+////	SendLn("CH0Rg0-1:" , FIFORead(spi), HEX);
+////	while( !IsTxBuffEmpty(spi) )
+////	{//wait the ent of Tx Empty frame 
+////	}	
 	Sleep(1);
 	USICRxFIFOClean(spi);
 	chip->stat = ADS_IDDLE;
+	SendLn("as=", ADS8694ReadReg(chip, AUTO_SEQ_EN), HEX);
+	SendLn("pDw=", ADS8694ReadReg(chip, PDW), HEX);
+	SendLn("ftch=", ADS8694ReadReg(chip, FEATURE), HEX);
+	Delay(3000);
 	SendStr("ini done");
 }
 
 void ADS8694CnvStart(ADS8694* chip)
 {
 	USIC_CH_TypeDef* spi = chip->spiDv->spi;
-	while( !SPIdeviceConf(spi, DATA_FRAME_L, WORD_L,  chip->spiDv->sSelNum, CSPOL_LOW, MSB_FIRST) );
+	while( !SPIdeviceConf(spi, DATA_FRAME_L, DT_WORD_L,  chip->spiDv->sSelNum, CSPOL_LOW, MSB_FIRST) );
 	chip->stat = ADS_READY;
 	USICRxFIFOClean(spi);	
 	WriteCmd(spi, AUTO_CH);
-	for( int i = 0; i < 4; ++i)
-	{
-		Sleep(0.1);
-		WriteCmd(spi, NOP);
-	}
+//	for( int i = 0; i < 4; ++i)
+//	{
+//				Sleep(0.1);
+//				WriteCmd(spi, CHAN_1 );
+//				Sleep(0.1);
+//				WriteCmd(spi, CHAN_2 );
+//				Sleep(0.1);
+//				WriteCmd(spi, CHAN_3 );
+//				Sleep(0.1);
+//				WriteCmd(spi, CHAN_0 );
+
+//	}
 	chip->stat = ADS_WORK;	
 }
 
@@ -136,7 +156,7 @@ bool ADS8694GetVal(ADS8694* chip, int* data)
 //		tmpL = FIFORead(spi);
 //		tmpL = FIFORead(spi);//cmd frame
 		
-		for (char adCh = 0; adCh < 16; ++adCh)
+		for (char adCh = 0; adCh < 3; ++adCh)
 		{
 //			tmpM = FIFORead(spi); //12 empty msb - e
 //			tmpM = FIFORead(spi) & 0xff;
@@ -157,6 +177,40 @@ bool ADS8694ReadStart(ADS8694* chip, int* data)
 {
 	bool ret = ADS8694GetVal(chip, data);
 	ADS8694CnvStart(chip);
+	return ret;
+}
+
+
+
+
+bool ADS8694Ch0ReadStart(ADS8694* chip, int* data)
+{
+	bool ret;
+	USIC_CH_TypeDef* spi = chip->spiDv->spi;
+	if(chip->stat == ADS_WORK)
+	{
+		while( !IsTxBuffEmpty (spi) )
+		{//wait the ent of Tx Empty frame 
+		}	
+		ret = true;
+		int tmpM,  tmpL;
+		Sleep(1);
+		chip->stat = ADS_READY;
+		for (char wrd = 0; wrd < 3; ++wrd)
+		{
+				data[wrd] = FIFORead(spi);
+				Sleep(1);
+		}		
+		chip->stat = ADS_IDDLE;
+	}
+	else
+		ret = false;
+	while( !SPIdeviceConf(spi, DATA_FRAME_L, DT_WORD_L,  chip->spiDv->sSelNum, CSPOL_LOW, MSB_FIRST) );
+	chip->stat = ADS_READY;
+	USICRxFIFOClean(spi);	
+	WriteCmd(spi, CHAN_0);
+
+	chip->stat = ADS_WORK;	
 	return ret;
 }
 

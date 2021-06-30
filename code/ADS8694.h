@@ -6,6 +6,7 @@
 typedef	enum 
 {
 	AUTO_SEQ_EN = 1,
+	PDW = 2,
 	FEATURE = 3,
 	CH0_RANGE = 5,
 	CH1_RANGE = 6,
@@ -44,7 +45,12 @@ typedef	enum
 typedef enum
 {
 	NOP = 0x0000,
-	AUTO_CH = 0x0A00
+	RESET =0x0850,
+	AUTO_CH = 0x0A00,
+	CHAN_0 = 0x0C00,
+	CHAN_1 = 0x0C40,
+	CHAN_2 = 0x0C80,
+	CHAN_3 = 0x0CC0,
 }  Commandos;
 
 typedef enum
@@ -76,5 +82,7 @@ void AD8694CnvStart(ADS8694* chip);
 bool ADS8694GetVal(ADS8694* chip, int* data);
 
 bool ADS8694ReadStart(ADS8694* chip, int* data);
+
+bool ADS8694Ch0ReadStart(ADS8694* chip, int* data);
  
 #endif
