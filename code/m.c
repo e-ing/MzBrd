@@ -131,28 +131,40 @@ int main (void)
 	int rxSize = 0;
 //	unsigned short xyz[] = {0x5555, 0xAAAA};
 	int tmpM, tmp2, tmpL, nWrd, adD, adCh, adAny, orjL,  orjMost;
-	ADS8694ReadStart(&ads, adRd);
-	while(1)
-	{
-		//Read UART
-		if((++cnt % 25) == 0)
-		{
-			GPToggle(hbPin);
-		}
-		if((cnt % 147) == 0)
-		{
-			GPToggle(hbBlue);
-			if (ADS8694Ch0ReadStart(&ads, adRd) != false)
-			{ 
-				SendLn("ok #", cnt / 147, DEC);
-				Send("", adRd[0], HEX);				
-				adD = ((adRd[2] >> 2) & 0x3f) | ((adRd[1] & 0xff) << 10);
-//				Send("-", adRd[1], HEX);
-//				Send("-", adRd[2], HEX);
-				SendLn("-", adD, HEX);
-				Sleep(2000);
-			}
-		}
+	bool ready = ADS8694ReadStart(&ads, adRd);
+				while(1)
+				{
+//			//		ADS8694ReadStart(&ads, adRd);
+					if((++cnt % 25) == 0)
+					{
+//						ready = 		ADS8694ReadStart(&ads, adRd);
+						GPToggle(hbPin);
+					}
+					if((cnt % 147) == 0)
+					{
+						GPToggle(hbBlue);
+//						if (ADS8694Ch0ReadStart(&ads, adRd) != false)
+//						if (ready != false)
+//						{ 
+//							SendLn("ok #", cnt / 147, DEC);
+//			//						Send("", adRd[0], HEX);				
+//			//						adD = ((adRd[2] >> 2) & 0x3f) | ((adRd[1] & 0xff) << 10);
+//			//		//				Send("-", adRd[1], HEX);
+//			//		//				Send("-", adRd[2], HEX);
+//							SendLn("-", adD, HEX);
+//							Sleep(2000);
+//						}
+						if(ADS8694ReadStart(&ads, adRd) != false)
+						{
+							SendLn("ok #", cnt / 147, DEC);
+							for(int chn = 0; chn < 5; ++chn)
+							{
+								Send ("ch", chn, DEC);
+								SendLn(" = ", adRd[chn], HEX);
+							}
+							Sleep(1000);
+						}		
+					}
 	}	
 	Delay(5);
 	//	SendLn("------------------", ++cnt, DEC);

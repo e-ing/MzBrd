@@ -206,7 +206,7 @@ void UARTini(unsigned char usicN, unsigned char chan, int rate, DX0_DSEL dx0N)
 	
 	uart->SCTR = ((8 - 1) << 24) | //word lenght
 								(8 - 1) << 16  |// fr.Lenght
-                SHIFT_CLK_ACTIV_LEVEL     | PASSIV_DATA_HIGH;
+                SHIFT_CLK_ACTIV_LEVEL | PASSIV_DATA_HIGH;
 	
 	uart->TCSR = (1 << 10) | 0x100;
 	uart->PSCR = 0xFFFFFFFF;
@@ -218,7 +218,7 @@ void UARTini(unsigned char usicN, unsigned char chan, int rate, DX0_DSEL dx0N)
 // lower due to transmission of a data word
 // STBTEN = 0, the trigger of the standard transmit buffer event is based on the transition of the fill level
 //  from equal to below the limit, not the fact being below
-	uart->TBCTR &= ~( 0x3F |  0x3F00   | 0x7000000);
+	uart->TBCTR &= ~( 0x3F |  0x3F00   | 0x7000000);//~(0x7003F3F)
   uart->TBCTR |=    16   | (1 << 8)  | 5 << 24 ;	// dataPtr == 16, limit==1, fifoSz == 32byte,	
 
 //Disable FIFO	
