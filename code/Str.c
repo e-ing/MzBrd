@@ -1,7 +1,28 @@
 #include <Str.h>
-#include <USIC.h>
 #include <TheTime.h>
 #include <stdio.h>
+
+
+//Put ascii string recived from uart to str, add 0 to string end
+//Return number of char recived from uart
+unsigned int GetStr(USIC_CH_TypeDef* uart, char* str)
+{
+	int nByte = GetRxBuffLenght(uart);//USICRxb(uart1, rxData);
+	if(nByte > 0) 
+	{
+			for(int i = 0; i < (nByte + 1); ++i)
+				str[i] = FIFORead(uart);
+			RbuffRead(uart, str + nByte + 1);
+			str[nByte + 2] = 0;
+	}
+	else if ( IsRx(uart) != 0)
+	{
+			nByte = RbuffRead(uart, str);
+			str[1] = 0;
+	}
+	return nByte;
+}
+
 
 void Enter(void)
 {
@@ -59,3 +80,4 @@ void SendLn2(const char* str, unsigned long data, PrintMode mode)
 	Send2(str, data, mode);
 	Enter();
 }
+

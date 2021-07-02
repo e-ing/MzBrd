@@ -55,18 +55,13 @@ typedef struct
 {
 	volatile GPIOctl* port;
 	unsigned char pin;
-	unsigned long maskOn;// = 1 << pin;
-	unsigned long  maskOff;// = 1 << (pin+16);
-	unsigned long maskTogg;//
+	unsigned long maskOn;   // = 1 << pin;
+	unsigned long  maskOff; // = 1 << (pin+16);
+	unsigned long maskTogg; //=(1 << pin) | (1 << (pin+16));
 } PoutPort;
 
-extern volatile   GPIOctl* GPs [];
+extern volatile GPIOctl* GPs [];
 
-
-
-//	volatile PortGPIO* port;
-//	unsigned char pin;
-//	unsigned long pinMaskIn;
 bool GetState(PinPort* pip);
 
 void GPinPullH(PinPort* pip);

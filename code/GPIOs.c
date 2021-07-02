@@ -1,7 +1,7 @@
 #include <GPIOs.h>
 
-volatile   GPIOctl* GPs [] = {(volatile GPIOctl*) PORT0_BASE, (volatile  GPIOctl*) PORT1_BASE, (volatile  GPIOctl*) PORT2_BASE, (volatile  GPIOctl*) PORT3_BASE,
-															 (volatile  GPIOctl*) PORT4_BASE, (volatile  GPIOctl*) PORT5_BASE, (volatile GPIOctl*) PORT14_BASE, (volatile  GPIOctl*) PORT15_BASE};
+volatile   GPIOctl* GPs [] = {(volatile  GPIOctl*) PORT0_BASE, (volatile   GPIOctl*) PORT1_BASE, (volatile   GPIOctl*) PORT2_BASE, (volatile GPIOctl*) PORT3_BASE,
+															 (volatile GPIOctl*) PORT4_BASE, (volatile  GPIOctl*) PORT5_BASE, (volatile  GPIOctl*) PORT14_BASE, (volatile   GPIOctl*) PORT15_BASE};
 ///////////========INPUT===========
 static void IniGPi(PinPort* pip)
 {

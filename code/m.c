@@ -19,6 +19,22 @@
 #include <Str.h>
 
 
+void PrintADS(ADS8694* adc)
+{
+	static int cnt = 0;
+	int adRd[5];
+	if(ADS8694ReadStart(adc, adRd) != false)
+	{
+		SendLn("ok #", cnt / 147, DEC);
+		for(int chn = 0; chn < 5; ++chn)
+		{
+			Send ("ch", chn, DEC);
+			SendLn(" = ", adRd[chn], HEX);
+		}
+	}
+}
+
+
 int main (void) 
 {
   SystemCoreClockUpdate();                     // /* update SystemCoreClock     */
@@ -49,66 +65,60 @@ int main (void)
 	SetAltFn(&tx1, 2);
 	SendStr("UART1 on \n");
 	USIC_CH_TypeDef* uart1 = usics[3];
-	USIC_CH_TypeDef* uart2 = usics[2];
-	
-	PinPort rx2 = {GPs[GPP0], 4, 0};
-	GPinPushPull(&rx2);
-	UARTini(1, 0, 115200, DXA);
-	PoutPort  tx2 =  {GPs[GPP0], 5, 0, 0, 0};
-	IniGPO( &tx2);
-	SetAltFn(&tx2, 2);
-	SendStr("UART2 on \n");
-	SendStr2("==UART2 on \n");
+				USIC_CH_TypeDef* uart2 = usics[2];
+				
+				PinPort rx2 = {GPs[GPP0], 4, 0};
+				GPinPushPull(&rx2);
+				UARTini(1, 0, 115200, DXA);
+				PoutPort  tx2 =  {GPs[GPP0], 5, 0, 0, 0};
+				IniGPO( &tx2);
+				SetAltFn(&tx2, 2);
+				SendStr("UART2 on \n");
+				SendStr2("==UART2 on \n");
 
-		SendStr("UART2 on \n");
-		SendStr2("UART2==n \n");
-		Delay(200);
-		SendStr2("...");
-		Delay(200);
+				SendStr("UART2 on \n");
+				SendStr2("UART2==n \n");
+				Delay(200);
+				SendStr2("...");
+				Delay(200);
 
-		GPToggle(hbBlue);
+				GPToggle(hbBlue);
 
-	
-	
-	PinPort miso = {GPs[GPP2], 2, 0};
-	GPinPushPull(&miso);
-//	SPIini(0, 1, 16, 32, 1000000);
-	SPIDev dac = {0, 1, 3, 0};
-	SPIDev adc = {0, 1, 0, 0};
-	ADS8694 ads = { &adc, {0}, ADS_IDDLE };
-	
-	PoutPort mosi = {GPs[GPP2], 5, 0, 0, 0};
-	IniGPO(&mosi);
-	SetAltFn(&mosi, 2);
-	
-	PoutPort sclk = {GPs[GPP2], 4, 0, 0, 0};
-	IniGPO(&sclk);
-	SetAltFn(&sclk, 2);
-	
-	PoutPort csDac = {GPs[GPP1], 13, 0, 0, 0};
-	IniGPO(&csDac);
-	SetAltFn(&csDac, 2);//selo3
-	
-	PoutPort lDac = {GPs[GPP1], 14, 0, 0, 0};
-	IniGPO(&lDac);//csADC
-	GPtoL(&lDac);
-	
-	PoutPort csAdc = {GPs[GPP2], 3, 0, 0, 0};
-	IniGPO(&csAdc);//csADC
-	SetAltFn(&csAdc, 2);//selo0
-	
-	AD5761ini(&dac);
-	SendStr("DAC AD5761 on \n");
-	SendStr2("==DAC AD5761 on \n");
-	ADS8694Ini(&ads);
-	SendStr("ADC ADS8494 on \n");
-	SendStr2("ADC ADS8494 on \n");
-
-	
-
-	
-//	USIC_CH_TypeDef* spi1 = usics[1];
-	
+				PinPort miso = {GPs[GPP2], 2, 0};
+				GPinPushPull(&miso);
+			//	SPIini(0, 1, 16, 32, 1000000);
+				SPIDev dac = {0, 1, 3, 0};
+				SPIDev adc = {0, 1, 0, 0};
+				ADS8694 ads = { &adc, {0}, ADS_IDDLE };
+				
+				PoutPort mosi = {GPs[GPP2], 5, 0, 0, 0};
+				IniGPO(&mosi);
+				SetAltFn(&mosi, 2);
+				
+				PoutPort sclk = {GPs[GPP2], 4, 0, 0, 0};
+				IniGPO(&sclk);
+				SetAltFn(&sclk, 2);
+				
+				PoutPort csDac = {GPs[GPP1], 13, 0, 0, 0};
+				IniGPO(&csDac);
+				SetAltFn(&csDac, 2);//selo3
+				
+				PoutPort lDac = {GPs[GPP1], 14, 0, 0, 0};
+				IniGPO(&lDac);//csADC
+				GPtoL(&lDac);
+				
+				PoutPort csAdc = {GPs[GPP2], 3, 0, 0, 0};
+				IniGPO(&csAdc);//csADC
+				SetAltFn(&csAdc, 2);//selo0
+				
+				AD5761ini(&dac);
+				SendStr("DAC AD5761 on \n");
+				SendStr2("==DAC AD5761 on \n");
+				ADS8694Ini(&ads);
+				SendStr("ADC ADS8494 on \n");
+				SendStr2("ADC ADS8494 on \n");
+				
+////			//	USIC_CH_TypeDef* spi1 = usics[1];	
 	int cnt = 0;
 	for(int i = 0; i < 10; ++i)
 		Tx1(1, 1, '=');
@@ -118,71 +128,43 @@ int main (void)
 		GPToggle( hbPin );
 		Delay(250 - i * i * i);
 	}
-	unsigned char nByte = 0;
+
 	char rxData[64];
 	Enter();
-	SendStr("Hello! Mz0.0\n");
-	int daVal = 0;
-	bool isRise = true;
-	int delta = 1000;
-	int max = 63000, min = 2000;
-	unsigned short regRdD[64];
-	int adRd[16];
-	int rxSize = 0;
-//	unsigned short xyz[] = {0x5555, 0xAAAA};
-	int tmpM, tmp2, tmpL, nWrd, adD, adCh, adAny, orjL,  orjMost;
-	bool ready = ADS8694ReadStart(&ads, adRd);
-				while(1)
-				{
-//			//		ADS8694ReadStart(&ads, adRd);
-					if((++cnt % 25) == 0)
-					{
-//						ready = 		ADS8694ReadStart(&ads, adRd);
-						GPToggle(hbPin);
-					}
-					if((cnt % 147) == 0)
-					{
-						GPToggle(hbBlue);
-//						if (ADS8694Ch0ReadStart(&ads, adRd) != false)
-//						if (ready != false)
-//						{ 
-//							SendLn("ok #", cnt / 147, DEC);
-//			//						Send("", adRd[0], HEX);				
-//			//						adD = ((adRd[2] >> 2) & 0x3f) | ((adRd[1] & 0xff) << 10);
-//			//		//				Send("-", adRd[1], HEX);
-//			//		//				Send("-", adRd[2], HEX);
-//							SendLn("-", adD, HEX);
-//							Sleep(2000);
-//						}
-						if(ADS8694ReadStart(&ads, adRd) != false)
-						{
-							SendLn("ok #", cnt / 147, DEC);
-							for(int chn = 0; chn < 5; ++chn)
-							{
-								Send ("ch", chn, DEC);
-								SendLn(" = ", adRd[chn], HEX);
-							}
-							Sleep(1000);
-						}		
-					}
-	}	
-	Delay(5);
-	//	SendLn("------------------", ++cnt, DEC);
-
-//		SPIdeviceConf ( spi1, 32, 16, 3, (const  CSpol) 4, (const BitOrder) 1);                                                                                                                                                                                         , CSPOL_LOW, MSB_FIRST))//TX Buffer ready check
-		//SPIdeviceConf(spi, FRAME_L, WORD_L, slN, CSPOL_LOW, MSB_FIRST))//TX Buffer ready check
-		//unsigned short data[2] = {(unsigned short)(0x >> 12) | rgAdr << 4,
-		//													(unsigned short)(val & 0xFFF)};		
-//		USICRxFIFOClean(spi1);
+	SendStr("Hello! Mz0.1\n");
 	
-	//	else if((++cnt % 5) == 0)
-					
-		//FastUSICTxw(spi1, xyz, 2);	
-//		AD5761SetVal(&dac, daVal);
-		daVal += isRise? delta : -delta;
-		isRise = (daVal > max)? false : (daVal < min)? true : isRise;
+	unsigned char nByte = 0, prev = 0;
+	char str[128];
+	while(true)
+	{
+	
+	//Read UART
+		Delay(10);
+
+		if( (++cnt % 500) == 0)
+		{
+			GPToggle(hbBlue);
+			if(GetStr(uart1, str) > 0)
+				SendStr(str);						
+			Enter();
+			SendStr("---==---");
+			Enter();
+		}
+	}
 }
 
+
+
+//Write csDac
+//	int daVal = 0;
+//	bool isRise = true;
+//	int delta = 1000;
+//	int max = 63000, min = 2000;
+//	int rxSize = 0;
+
+//		AD5761SetVal(&dac, daVal);
+//		daVal += isRise? delta : -delta;
+//		isRise = (daVal > max)? false : (daVal < min)? true : isRise;
 //ReadDAC
 //						{
 //							GPToggle(hbBlue);
@@ -218,7 +200,7 @@ int main (void)
 //					{
 //						//GPToggle(GPs[GPP2], 0);
 //						Enter();
-//			//			SendLn("TRBPTR", uart1->TRBPTR , HEX);
+//		/	//			SendLn("TRBPTR", uart1->TRBPTR , HEX);
 //			//			SendLn("TRBSR= ", uart1->TRBSR , HEX);
 //						SendLn("RxFIFO lenght is", nByte, DEC);
 //						for(int i = 0; i <= nByte; ++i)

@@ -1,7 +1,7 @@
 #include <USIC.h>
 //#include <GPIO.h>
-#include <Bits.h>
 #include <TheTime.h>
+#include <Bits.h>
 #define bool char
 #define true 1
 #define false 0	
@@ -193,7 +193,7 @@ void ReleaseChan(unsigned char usicN, unsigned char chan)
 }
 
 void UARTini(unsigned char usicN, unsigned char chan, int rate, DX0_DSEL dx0N)
-{	
+{		
 	unsigned char num = usicN * USICS_NUM + chan;
 	if (isUsicIni[num] != false)
 		return;
@@ -218,6 +218,13 @@ void UARTini(unsigned char usicN, unsigned char chan, int rate, DX0_DSEL dx0N)
 // lower due to transmission of a data word
 // STBTEN = 0, the trigger of the standard transmit buffer event is based on the transition of the fill level
 //  from equal to below the limit, not the fact being below
+
+//spi->TBCTR &= ~( 0x3F |  0x3F00   | 0x7000000);
+//  spi->TBCTR |=    16   | (1 << 8)  | 5 << 24 ;	// dataPtr == 16, limit==1, fifoSz == 32byte,
+	
+
+
+
 	uart->TBCTR &= ~( 0x3F |  0x3F00   | 0x7000000);//~(0x7003F3F)
   uart->TBCTR |=    16   | (1 << 8)  | 5 << 24 ;	// dataPtr == 16, limit==1, fifoSz == 32byte,	
 
@@ -230,13 +237,24 @@ void UARTini(unsigned char usicN, unsigned char chan, int rate, DX0_DSEL dx0N)
 //										0x3f	 |      //USIC_CH_RBCTR_DPTR_Msk |
 //										0x10000000);				//USIC_CH_RBCTR_LOF_Msk) ;
 	uart->RBCTR = 0;									
-	static const unsigned long RX_LIM = 31;
+	static const unsigned long RX_LIM = 30;
 	static const unsigned long RX_D_PTR = 0;
 //	static const unsigned long RX_BUFF_SZ16 = 4;
 	static const unsigned long RX_BUFF_SZ32 = 5;
 	uart->RBCTR |= RX_D_PTR | (RX_LIM << 8) ;
 										
 	uart->RBCTR |= RX_BUFF_SZ32 << 24 | 0x10000000;
+	
+//		spi->RBCTR = 0;									
+//	static const unsigned long RX_LIM = 30;
+//	static const unsigned long RX_D_PTR = 0;
+//	static const unsigned long RX_BUFF_SZ16 = 4;
+//	static const unsigned long RX_BUFF_SZ32 = 5;
+//	spi->RBCTR |= RX_D_PTR | (RX_LIM << 8) ;
+//	spi->RBCTR |= RX_BUFF_SZ32 << 24 | 0x10000000;	
+
+	
+	
 	
 //											 ((limit << USIC_CH_RBCTR_LIMIT_Pos) |
 //											 (data_pointer << USIC_CH_RBCTR_DPTR_Pos) |
@@ -263,10 +281,10 @@ void UARTini(unsigned char usicN, unsigned char chan, int rate, DX0_DSEL dx0N)
 	isUsicIni[num] = true;
 }
 
-static inline bool IsRxFIFOEmpty(USIC_CH_TypeDef* usic)
-{
-	return ( (usic->RBUFSR & RX_DATA_READY) == 0)? true : false; 
-}
+//bool IsRxEmpty (USIC_CH_TypeDef* usic)
+//{
+//	return ( (usic->RBUFSR & RX_DATA_READY) == 0)? true : false; 
+//}
 
 
 unsigned  int GetRxBuffIn(USIC_CH_TypeDef* usic)
@@ -387,11 +405,9 @@ unsigned int USICRxw(USIC_CH_TypeDef* usic, unsigned short* data)
 	
 	unsigned int num = 0, ret = GetRxBuffLenght(usic);
 //	while (num <= ret )/////!IsRxFIFOEmpty(usic)
-	for (; num < 64; ++num)
+	for (; num < ret; ++num)
 		data[num] = (unsigned short) (usic->OUTR);
-	data[47] = 0xabcd;
-	//data[num++] = (unsigned short) (usic->OUTR);
-	//data[num++] = (char) (usic->RBUF & 0xff);	
+
 	return ret;
 	
 }
@@ -427,13 +443,17 @@ bool SPIdeviceConf(USIC_CH_TypeDef* usic, unsigned long frLen, unsigned long wLe
 
 unsigned short FIFORead(USIC_CH_TypeDef* usic)
 {
-		return usic->OUTR;
+	
+	unsigned short ret = usic->OUTR;
+	usic->PSCR = 1 << 14;
+	return ret;
+
 }
 
 void USICRxFIFOClean(USIC_CH_TypeDef* usic)
 {
 	unsigned short tmp;
-	while (!IsRxFIFOEmpty(usic))
+	while ((usic->RBUFSR & RX_DATA_READY) != 0 )
 		tmp = usic->OUTR;	
 	tmp = usic->OUTR;	
 	tmp = usic->OUTR;	
@@ -443,11 +463,8 @@ unsigned int USICRxb(USIC_CH_TypeDef* usic, char* data)
 {
 	unsigned int num = 0; //ret = GetRxBuffLenght(usic);
 
-	while (!IsRxFIFOEmpty(usic) )/////!IsRxFIFOEmpty(usic)
-	{
+	while ((usic->RBUFSR & RX_DATA_READY) != 0 )/////!IsRxFIFOEmpty(usic)
 			data[num++] = (char) (usic->OUTR & 0xff);
-		data[num] = 'x';
-	}
 	
 	//data[num++] = (char) (usic->RBUF & 0xff);	
 	return num;
@@ -455,7 +472,41 @@ unsigned int USICRxb(USIC_CH_TypeDef* usic, char* data)
 
 
 
+unsigned char IsRx(USIC_CH_TypeDef* usic)
+{
+	return   (unsigned char) ( (usic->PSR & (1 << 14)) >> 14 );
+	
+}
 
+unsigned char RbuffRead(USIC_CH_TypeDef* usic, char* rdd)
+{
+	unsigned char ret;
+	char tmp;
+	if((usic->PSR & (1 << 14)) != 0)
+	{
+		*rdd = usic->RBUF;
+		tmp = usic->OUTR;
+		usic->PSCR = 1 << 14;
+		ret = 1;
+	}
+	else
+		ret = 0;
+	return ret;
+}
+
+unsigned char RbuffReadW(USIC_CH_TypeDef* usic, unsigned short* rdd)
+{
+	unsigned char ret;
+	if((usic->PSR & (1 << 14)) != 0)
+	{
+		*rdd = usic->RBUF;
+		usic->PSCR = 1 << 14;
+		ret = 1;
+	}
+	else
+		ret = 0;
+	return ret;
+}
 
 
 unsigned char GetRxBuffSz(USIC_CH_TypeDef* usic)
