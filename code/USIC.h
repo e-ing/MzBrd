@@ -121,8 +121,7 @@ void  FastUSICTxw(USIC_CH_TypeDef* usic, const unsigned short* data, unsigned in
 unsigned short FIFORead(USIC_CH_TypeDef* usic);
 unsigned  int GetRxBuffIn(USIC_CH_TypeDef* usic);
 unsigned  int GetRxBuffOut(USIC_CH_TypeDef* usic);
-unsigned char GetRxBuffSz(USIC_CH_TypeDef* usic);
-//bool IsRxEmpty (USIC_CH_TypeDef* usic);
+
 unsigned char IsRx(USIC_CH_TypeDef* usic);
 unsigned char RbuffRead(USIC_CH_TypeDef* usic, char* rdd);
 unsigned char RbuffReadW(USIC_CH_TypeDef* usic, unsigned short* rdd);

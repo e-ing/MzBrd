@@ -8,18 +8,9 @@
 unsigned int GetStr(USIC_CH_TypeDef* uart, char* str)
 {
 	int nByte = GetRxBuffLenght(uart);//USICRxb(uart1, rxData);
-	if(nByte > 0) 
-	{
-			for(int i = 0; i < (nByte + 1); ++i)
+		for(int i = 0; i < nByte; ++i)
 				str[i] = FIFORead(uart);
-			RbuffRead(uart, str + nByte + 1);
-			str[nByte + 2] = 0;
-	}
-	else if ( IsRx(uart) != 0)
-	{
-			nByte = RbuffRead(uart, str);
-			str[1] = 0;
-	}
+		str[nByte] = 0;
 	return nByte;
 }
 
@@ -37,7 +28,7 @@ void SendStr(const char* str)
 		do
 		{
 			Tx1(1, 1, *str);
-			Delay(10);
+//			Delay(1);
 		}
 		while(*++str);	
 }

@@ -287,6 +287,20 @@ void UARTini(unsigned char usicN, unsigned char chan, int rate, DX0_DSEL dx0N)
 //}
 
 
+static unsigned char GetRxBuffSz(USIC_CH_TypeDef* usic)
+{
+	unsigned long ret =  (usic->RBCTR & USIC_CH_RBCTR_SIZE_Msk) >> 24;
+	return (ret == 0)? 0 : (unsigned char) (1 << ret);
+}	
+
+static unsigned char GetTxBuffSz(USIC_CH_TypeDef* usic)
+{
+	unsigned long ret =  (usic->TBCTR & USIC_CH_RBCTR_SIZE_Msk) >> 24;
+	return (ret == 0)? 0 : (unsigned char) (1 << ret);
+}	
+
+
+
 unsigned  int GetRxBuffIn(USIC_CH_TypeDef* usic)
 {
 	static const unsigned long MASK =  0x0000003F;
@@ -308,21 +322,28 @@ unsigned  int GetRxBuffOut(USIC_CH_TypeDef* usic)
 
 unsigned  int GetRxBuffLenght(USIC_CH_TypeDef* usic)
 {
-	static const unsigned long MASK =  0x0000003F;
-	unsigned long ptrs =  usic->TRBPTR;
-	unsigned long top = (ptrs >> 16) &  MASK;
-	unsigned long bot = (ptrs >> 24) & MASK;
-	unsigned int ret = (top >= bot)? (top - bot) : (GetRxBuffSz(usic) - bot + top);
-	return ret; 
+	unsigned int ret;	
+	if(IsRx(usic) == false)
+		ret = 0;
+	else
+	{
+		static const unsigned long MASK =  0x0000003F;
+		unsigned long ptrs =  usic->TRBPTR;
+		unsigned long top = (ptrs >> 16) &  MASK;
+		unsigned long bot = (ptrs >> 24) & MASK;
+		ret = (top >= bot)? top + 1 - bot : GetRxBuffSz(usic) + 1 + top - bot; 
+	}
+	return ret;
 }
 
 unsigned int GetTxBuffLenght(USIC_CH_TypeDef* usic)
 {
-	static const unsigned long MASK =  0x0000003F;
-	unsigned long ptrs =  usic->TRBPTR;
-	unsigned long top = ptrs &  MASK;
-	unsigned long bot = (ptrs >> 5) & MASK;
-	unsigned int delta = (top > bot)? (top - bot) : (bot - top);
+
+		static const unsigned long MASK =  0x0000003F;
+		unsigned long ptrs =  usic->TRBPTR;
+		unsigned long top = ptrs &  MASK;
+		unsigned long bot = (ptrs >> 5) & MASK;
+		unsigned int delta = (top > bot)? (top - bot) : (GetTxBuffSz(usic) - bot + top);
 	return delta; 
 }
 
@@ -348,6 +369,7 @@ void Tx(USIC_CH_TypeDef* usic, unsigned short data)
 void Tx1(unsigned char usicN, unsigned char chan, unsigned short data)
 {
 	Tx(usics[usicN * USICS_NUM + chan], data);
+	USIC1_CH0->IN[0] = data;
 	//USIC_CH_TypeDef* uart = usics[usicN * USICS_NUM + chan];
 }
 
@@ -509,11 +531,7 @@ unsigned char RbuffReadW(USIC_CH_TypeDef* usic, unsigned short* rdd)
 }
 
 
-unsigned char GetRxBuffSz(USIC_CH_TypeDef* usic)
-{
-	unsigned long ret =  (usic->RBCTR & USIC_CH_RBCTR_SIZE_Msk) >> 24;
-	return (ret == 0)? 0 : (unsigned char) (1 << ret);
-}	
+
 
 //	spi->KSCFG = 3; // Module enable & bit protection
 ////==Clock==

@@ -131,7 +131,7 @@ int main (void)
 
 	char rxData[64];
 	Enter();
-	SendStr("Hello! Mz0.1\n");
+	SendStr("Hello! Mz0.2=21.06.05=\n");
 	
 	unsigned char nByte = 0, prev = 0;
 	char str[128];
@@ -144,8 +144,24 @@ int main (void)
 		if( (++cnt % 500) == 0)
 		{
 			GPToggle(hbBlue);
-			if(GetStr(uart1, str) > 0)
-				SendStr(str);						
+//			if( IsRx(uart1) )
+//			{
+//				Send("bg: ", GetRxBuffIn(uart1), DEC);
+//				Sleep(10);
+//				Send(" end:", GetRxBuffOut(uart1), DEC);
+//				Sleep(10);
+//				SendLn(" sz:", GetRxBuffLenght (uart1), DEC);				
+//			}
+			unsigned char sz = GetStr(uart1, str);
+			if( sz > 0)
+			{
+				SendStr(str);
+				Sleep(10);
+				Enter();
+				Sleep(10);
+				SendLn(" == ", sz, DEC);						
+				Sleep(10);
+			}
 			Enter();
 			SendStr("---==---");
 			Enter();
